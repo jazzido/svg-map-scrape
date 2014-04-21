@@ -8,28 +8,34 @@ import ogr
 import numpy as np
 from skimage import transform
 
-DEPARTAMENTOS_SHP = 'departamentos/paisxdpto2010.shp'
+DEPARTAMENTOS_SHP = 'departamentos_shp/paisxdpto2010.shp'
 SVG_NS = "http://www.w3.org/2000/svg"
 
 np_array  = lambda points: np.array([[p.real, p.imag] for p in points])
 invert_y  = lambda p0, h: complex(p0.real, h - p0.imag)
 xpath_svg = lambda tree, exp: tree.xpath(exp, namespaces={ 'svg': SVG_NS })
+
+
 estimate_transform = lambda svg_points, shp_points: transform.estimate_transform('projective',
                                                                                  np_array(svg_points),
                                                                                  np_array(shp_points))
-
+# all points in an iterable of svg paths (iterable of list of complex)
 svg_paths_points = lambda paths, tr, svg_height: [(p.attrib,
                                                    [[p2c(tr(c2p(invert_y(line.start, svg_height)))[0])
                                                      for line in parse_path(ring + ' Z')]
                                                     for ring in p.attrib['d'].split('Z') if ring != ''])
                                                   for p in paths]
 
+# all points in an OGR geometry
 ogr_geom_points = lambda geom: set([complex(geom.GetPoint(i)[0], geom.GetPoint(i)[1]) for i in range(geom.GetPointCount())])
 
+# complex type to (x,y) tuple
 c2p = lambda c: (c.real, c.imag)
+# (x,y) tuple to complex type
 p2c = lambda p: complex(*p)
 
 def find_bounding_box(points):
+    """ Find envelop of iterable of points (iterable of complex) """
     _t = sorted(map(lambda p: p.real, points))
     min_x, max_x = _t[0], _t[-1]
 
@@ -45,8 +51,10 @@ def find_bounding_box(points):
 
 def geocode_depto(prov, dpto, envelope_func=find_bounding_box):
     """
+    This is where the magic happens:
+    TODO Write
     """
-    fname = "fracciones/%02d%03d.svg" % (prov, dpto)
+    fname = "source_svgs/fracciones/%02d%03d.svg" % (prov, dpto)
 
     with open(fname, 'r') as f:
         tree = etree.parse(f)
@@ -81,7 +89,7 @@ def geocode_depto(prov, dpto, envelope_func=find_bounding_box):
     return svg_paths_points(paths, tr, svg_height)
 
 def geocode_fraccion(prov, dpto, fraccion, reference_geom, envelope_func=find_bounding_box):
-    fname = "radios/%02d%03d%02d.svg" % (prov, dpto, fraccion)
+    fname = "source_svgs/radios/%02d%03d%02d.svg" % (prov, dpto, fraccion)
     print >>sys.stderr, fname
     with open(fname, 'r') as f:
         tree = etree.parse(f)
@@ -160,6 +168,8 @@ def write_features_to_layer(paths, layer, field_writer):
         layer.CreateFeature(feature)
 
 def shapefile_points(fname, filter_exp):
+    """ Collect all the geometries that match +filter_exp+ and return and
+        iterable of points """
     ds = ogr.Open(fname)
     layer = ds.GetLayer(0)
     layer.ResetReading()
@@ -172,9 +182,20 @@ def shapefile_points(fname, filter_exp):
 
     return ogr_geom_points(geom)
 
+def shapefile_features(fname):
+    """ Yield every feature in shapefile +fname+  """
+    driver = ogr.GetDriverByName("ESRI Shapefile")
+    ds = driver.Open(fname, 0)
+    layer = ds.GetLayer(0)
+    for feature in layer:
+        yield feature
+
+    ds.Destroy()
+
+
 if __name__ == '__main__':
 
-    with create_output_shape('/tmp/fracciones') as shp:
+    with create_output_shape('output_shp') as shp:
 
         # layer de fracciones
         fracciones = shp.CreateLayer('fracciones', geom_type=ogr.wkbPolygon)
@@ -183,10 +204,8 @@ if __name__ == '__main__':
             fracciones.CreateField(ogr.FieldDefn(a[:10]),
                                    ogr.OFTString)
 
-        for d in unicodecsv.DictReader(open('deptos.csv')):
-            prov, dpto = innt(d['PROV']), int(d['DEPTO'])
-            if prov in (6,2,):
-                continue
+        for d in shapefile_features(DEPARTAMENTOS_SHP):
+            prov, dpto = int(d['PROV']), int(d['DEPTO'])
             try:
                 paths = geocode_depto(prov, dpto)
                 write_features_to_layer(paths,
