@@ -3,14 +3,14 @@
 *(También publicado en http://blog.jazzido.com/2014/05/09/scrapeando-mapas-reconstruyendo-fracciones-y-radios-censales/)*
 
 Como a casi todos los que todos los que trabajamos con información pública, me interesa
-conseguir información al menor nivel de *desagregación* posible. Para decirlo de otro modo, en alta
+conseguir información al menor nivel de *agregación* posible. Para decirlo de otro modo, en alta
 definición. Esa fue la idea detrás del [mapa de resultados electorales a nivel de *centro de
 votación*](http://interactivos.lanacion.com.ar/mapa-elecciones-2013/) que hice el año pasado en
 [LaNacion.com](http://lanacion.com), como becario
 [Knight-Mozilla OpenNews](http://opennews.org). El primer proyecto que desarrollé durante esa beca,
 fue una
 [visualización interactiva de los datos arrojados por los dos últimos censos de población en Argentina](http://interactivos.lanacion.com.ar/censo/#Poblacion_Total-intercensal). El
-plan original para ese proyecto también era mostrar los datos al menor nivel de desagregación
+plan original para ese proyecto también era mostrar los datos al menor nivel de agregación
 posible que para el censo son los *radios censales*, [definidos] [1] como una porción del espacio
 geográfico que contiene en promedio 300 viviendas. Por desgracia, no estaban disponibles los mapas
 que definen los radios, ni los datos de las variables censales a ese nivel.
