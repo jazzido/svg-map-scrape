@@ -61,9 +61,16 @@ def find_bounding_box(points):
 def geocode_depto(prov, dpto, envelope_func=find_bounding_box):
     """
     Acá está la magia
+
+    Para un departamento -dado por prov y dpto-, lo obtiene del mapa de referencia
+    DEPARTAMENTOS_SHP. Interpreta los paths contenidos en el SVG correspondiente
+    y calcula la transformación que permite georeferenciarlo.
+
     """
+
     fname = "source_svgs/fracciones/%02d%03d.svg" % (prov, dpto)
 
+    print >>sys.stderr, "Opening %s" % fname
     with open(fname, 'r') as f:
         tree = etree.parse(f)
 
@@ -97,6 +104,10 @@ def geocode_depto(prov, dpto, envelope_func=find_bounding_box):
     return svg_paths_points(paths, tr, svg_height)
 
 def geocode_fraccion(prov, dpto, fraccion, reference_geom, envelope_func=find_bounding_box):
+    """
+    Procedimiento análogo a geocode_depto, para los radios censales.
+    """
+
     fname = "source_svgs/radios/%02d%03d%02d.svg" % (prov, dpto, fraccion)
     print >>sys.stderr, fname
     with open(fname, 'r') as f:
@@ -200,9 +211,8 @@ def shapefile_features(fname):
 
     ds.Destroy()
 
-def main():
-    with create_output_shape('output_shp') as shp:
-
+def main(output_dir):
+    with create_output_shape(output_dir) as shp:
         # layer de fracciones
         fracciones = shp.CreateLayer('fracciones', geom_type=ogr.wkbPolygon)
         # campos del layer de fracciones
@@ -248,4 +258,7 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    if len(sys.argv) < 2:
+        print >>sys.stderr, "Usage: %s <output_dir>" % (__file__)
+        exit(1)
+    main(sys.argv[1])
