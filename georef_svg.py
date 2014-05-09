@@ -11,31 +11,40 @@ from skimage import transform
 DEPARTAMENTOS_SHP = 'departamentos_shp/paisxdpto2010.shp'
 SVG_NS = "http://www.w3.org/2000/svg"
 
+# convertir un iterable de de complex() a un array de numpy
 np_array  = lambda points: np.array([[p.real, p.imag] for p in points])
+
+# invertir un complex() respecto del eje y
+# (porque la proyección SVG está al revés que la proyección POSGAR Argentina 3)
 invert_y  = lambda p0, h: complex(p0.real, h - p0.imag)
+
+# query XPATH, incluyendo al namespace de SVG
 xpath_svg = lambda tree, exp: tree.xpath(exp, namespaces={ 'svg': SVG_NS })
 
-
+# estimar una transforación geométrica entre dos conjuntos de puntos
 estimate_transform = lambda svg_points, shp_points: transform.estimate_transform('projective',
                                                                                  np_array(svg_points),
                                                                                  np_array(shp_points))
-# all points in an iterable of svg paths (iterable of list of complex)
+
+# retorna un list() de complex():
+# con todos los puntos en un iterable de paths SVG (lista de lista de complex())
 svg_paths_points = lambda paths, tr, svg_height: [(p.attrib,
                                                    [[p2c(tr(c2p(invert_y(line.start, svg_height)))[0])
                                                      for line in parse_path(ring + ' Z')]
                                                     for ring in p.attrib['d'].split('Z') if ring != ''])
                                                   for p in paths]
 
-# all points in an OGR geometry
+# todos los puntos en una geometria OGR
+# set() de complex()
 ogr_geom_points = lambda geom: set([complex(geom.GetPoint(i)[0], geom.GetPoint(i)[1]) for i in range(geom.GetPointCount())])
 
-# complex type to (x,y) tuple
+# convertir complex() a una tupla (r,i)
 c2p = lambda c: (c.real, c.imag)
-# (x,y) tuple to complex type
+# convertir tupla (r,i) a un complex()
 p2c = lambda p: complex(*p)
 
 def find_bounding_box(points):
-    """ Find envelop of iterable of points (iterable of complex) """
+    """ envolvente de un iterable de puntos (complex()) """
     _t = sorted(map(lambda p: p.real, points))
     min_x, max_x = _t[0], _t[-1]
 
@@ -51,8 +60,7 @@ def find_bounding_box(points):
 
 def geocode_depto(prov, dpto, envelope_func=find_bounding_box):
     """
-    This is where the magic happens:
-    TODO Write
+    Acá está la magia
     """
     fname = "source_svgs/fracciones/%02d%03d.svg" % (prov, dpto)
 
@@ -192,9 +200,7 @@ def shapefile_features(fname):
 
     ds.Destroy()
 
-
-if __name__ == '__main__':
-
+def main():
     with create_output_shape('output_shp') as shp:
 
         # layer de fracciones
@@ -236,3 +242,10 @@ if __name__ == '__main__':
             except Exception, e:
                 print >>sys.stderr, "ERROR EN %s - %s (%d %d)" % (d['NOMPROV'], d['NOMDEP1'], prov, dpto)
                 print >>sys.stderr, traceback.format_exc()
+
+        shp.SyncToDisk()
+
+
+
+if __name__ == '__main__':
+    main()
