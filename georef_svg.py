@@ -1,7 +1,7 @@
+# coding: utf-8
 import sys, re, os, traceback
 from contextlib import contextmanager
 
-import unicodecsv
 from svg.path import parse_path
 from lxml import etree
 import ogr
