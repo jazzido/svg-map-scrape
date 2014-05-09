@@ -1,5 +1,7 @@
 # *Scrapeando* mapas: reconstruyendo fracciones y radios censales
 
+*(También publicado en http://blog.jazzido.com/2014/05/09/scrapeando-mapas-reconstruyendo-fracciones-y-radios-censales/)*
+
 Como a casi todos los que todos los que trabajamos con información pública, me interesa
 conseguir información al menor nivel de *desagregación* posible. Para decirlo de otro modo, en alta
 definición. Esa fue la idea detrás del [mapa de resultados electorales a nivel de *centro de
